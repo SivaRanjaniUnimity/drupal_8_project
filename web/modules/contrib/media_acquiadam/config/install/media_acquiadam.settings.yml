@@ -1,0 +1,9 @@
+domain:
+token:
+sync_interval: 3600
+sync_method: "updated_date"
+size_limit: 2048
+image_quality: 80
+sync_perform_delete: 0
+num_assets_per_page: 12
+report_asset_usage: 1

@@ -1,0 +1,6 @@
+name: Hoya Job Openings
+type: module
+description: The module will handle the Job openings page.
+package: Hoya
+core: 8.x
+core_version_requirement: ^8 || ^9

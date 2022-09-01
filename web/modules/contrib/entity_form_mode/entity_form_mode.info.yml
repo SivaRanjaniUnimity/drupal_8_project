@@ -1,0 +1,11 @@
+name: 'Entity Form Mode'
+type: module
+description: 'Automatically select of form modes for entity.'
+core: 8.x
+core_version_requirement: ^8 || ^9
+package: 'Other'
+
+# Information added by Drupal.org packaging script on 2020-12-25
+version: '2.0.0'
+project: 'entity_form_mode'
+datestamp: 1608924479

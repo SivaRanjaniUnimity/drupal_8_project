@@ -1,0 +1,40 @@
+<?php
+
+/**
+ * Implements hook_entity_type_build().
+ */
+function cambridge_englishresource_entity_type_build(array &$entity_types) {
+    // $entity_types['node']->setFormClass('resource_custom_form', 'Drupal\node\NodeForm');
+    $entity_types['user']->setFormClass('register', 'Drupal\user\RegisterForm');
+  }
+
+function cambridge_englishresource_page_attachments(array &$attachments) {
+    // dpm("library");
+    $attachments['#attached']['library'][] = 'cambridge_englishresource/cambridge_resource_library';
+  }
+
+/**
+* Implementation of hook_theme()
+*/
+function cambridge_englishresource_theme($existing, $type, $theme, $path) {
+  return [
+    'search_family' => [
+      'variables' => ['data' => NULL],
+    ],
+  ];
+}
+  
+function cambridge_englishresource_views_pre_view(\Drupal\views\ViewExecutable $view, $display_id, array &$args) 
+{
+ 
+  if($view->id() == "cambridge" && ($display_id=="block_3" || $display_id=="block_5" )){
+    $current_path = \Drupal::service('path.current')->getPath();      
+    $split_url = explode("/",$current_path);
+    if(!empty($split_url)){
+      $family_id = end($split_url);
+      $view->args[0] =$family_id;
+    }      
+  }    
+}
+
+?>

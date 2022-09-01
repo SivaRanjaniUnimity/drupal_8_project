@@ -1,0 +1,33 @@
+langcode: en
+status: true
+dependencies:
+  config:
+    - core.entity_view_mode.media.media_library
+    - field.field.media.acquia_dam_asset.field_acquiadam_asset_descrip
+    - field.field.media.acquia_dam_asset.field_acquiadam_asset_file
+    - field.field.media.acquia_dam_asset.field_acquiadam_asset_id
+    - image.style.thumbnail
+    - media.type.acquia_dam_asset
+  module:
+    - image
+id: media.acquia_dam_asset.media_library
+targetEntityType: media
+bundle: acquia_dam_asset
+mode: media_library
+content:
+  thumbnail:
+    type: image
+    weight: 0
+    region: content
+    label: hidden
+    settings:
+      image_style: thumbnail
+      image_link: ''
+    third_party_settings: {  }
+hidden:
+  created: true
+  field_acquiadam_asset_descrip: true
+  field_acquiadam_asset_file: true
+  field_acquiadam_asset_id: true
+  name: true
+  uid: true

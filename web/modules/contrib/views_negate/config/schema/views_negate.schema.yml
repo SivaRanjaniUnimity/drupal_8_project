@@ -1,0 +1,6 @@
+views.argument.StringNegate:
+  type: views.argument.string
+  mapping:
+    negate:
+      type: boolean
+      label: 'Negate'

@@ -1,0 +1,258 @@
+diff --git a/core/lib/Drupal/Core/Entity/Query/Sql/Query.php b/core/lib/Drupal/Core/Entity/Query/Sql/Query.php
+index de25f69358..b97a0f31e3 100644
+--- a/core/lib/Drupal/Core/Entity/Query/Sql/Query.php
++++ b/core/lib/Drupal/Core/Entity/Query/Sql/Query.php
+@@ -76,6 +76,7 @@ public function __construct(EntityTypeInterface $entity_type, $conjunction, Conn
+    */
+   public function execute() {
+     return $this
++      ->alter()
+       ->prepare()
+       ->compile()
+       ->addSort()
+@@ -83,6 +84,28 @@ public function execute() {
+       ->result();
+   }
+ 
++  /**
++   * Invoke hooks to allow modules to alter the entity query.
++   *
++   * Modules may alter all queries or only those having a particular tag.
++   * Alteration happens before the query is prepared for execution, so that
++   * the alterations then get prepared in the same way.
++   *
++   * @return $this
++   *   Returns the called object.
++   */
++  protected function alter() {
++    $hooks = ['entity_query', 'entity_query_' . $this->getEntityTypeId()];
++    if (isset($this->alterTags)) {
++      foreach ($this->alterTags as $tag => $value) {
++        $hooks[] = 'entity_query_' . $tag;
++        $hooks[] = 'entity_query_' . $this->getEntityTypeId() . '_' . $tag;
++      }
++    }
++    \Drupal::moduleHandler()->alter($hooks, $this);
++    return $this;
++  }
++
+   /**
+    * Prepares the basic query with proper metadata/tags and base fields.
+    *
+diff --git a/core/lib/Drupal/Core/Entity/entity.api.php b/core/lib/Drupal/Core/Entity/entity.api.php
+index 7e1277fdd0..ea080d1eb7 100644
+--- a/core/lib/Drupal/Core/Entity/entity.api.php
++++ b/core/lib/Drupal/Core/Entity/entity.api.php
+@@ -2214,6 +2214,64 @@ function hook_entity_extra_field_info_alter(&$info) {
+   }
+ }
+ 
++/**
++ * Alter any entity query.
++ *
++ * @param \Drupal\Core\Entity\Query\QueryInterface $query
++ *   The entity query.
++ *
++ * @see hook_entity_query_ENTITY_TYPE_alter()
++ * @see \Drupal\Core\Entity\Query\QueryInterface
++ */
++function hook_entity_query_alter(\Drupal\Core\Entity\Query\QueryInterface $query) {
++  if ($query->hasTag('entity_reference')) {
++    $entityType = \Drupal::entityTypeManager()->getDefinition($query->getEntityTypeId());
++    $query->sort($entityType->getKey('id'), 'desc');
++  }
++}
++
++/**
++ * Alter an entity query that has a specific tag.
++ *
++ * @param \Drupal\Core\Entity\Query\QueryInterface $query
++ *   The entity query.
++ *
++ * @see hook_entity_query_alter()
++ * @see hook_entity_query_ENTITY_TYPE_TAG_alter()
++ * @see \Drupal\Core\Entity\Query\QueryInterface
++ */
++function hook_entity_query_TAG_alter(\Drupal\Core\Entity\Query\QueryInterface $query) {
++  $entityType = \Drupal::entityTypeManager()->getDefinition($query->getEntityTypeId());
++  $query->sort($entityType->getKey('id'), 'desc');
++}
++
++/**
++ * Alter entity queries for a specific entity type.
++ *
++ * @param \Drupal\Core\Entity\Query\QueryInterface $query
++ *   The entity query.
++ *
++ * @see hook_entity_query_alter()
++ * @see \Drupal\Core\Entity\Query\QueryInterface
++ */
++function hook_entity_query_ENTITY_TYPE_alter(\Drupal\Core\Entity\Query\QueryInterface $query) {
++  $query->condition('id', '1', '<>');
++}
++
++/**
++ * Alter entity queries for a specific entity type that have a specific tag.
++ *
++ * @param \Drupal\Core\Entity\Query\QueryInterface $query
++ *   The entity query.
++ *
++ * @see hook_entity_query_ENTITY_TYPE_alter()
++ * @see hook_entity_query_TAG_alter()
++ * @see \Drupal\Core\Entity\Query\QueryInterface
++ */
++function hook_entity_query_ENTITY_TYPE_TAG_alter(\Drupal\Core\Entity\Query\QueryInterface $query) {
++  $query->condition('id', '1', '<>');
++}
++
+ /**
+  * @} End of "addtogroup hooks".
+  */
+diff --git a/core/modules/field/tests/modules/field_test/field_test.module b/core/modules/field/tests/modules/field_test/field_test.module
+index 4d14b80e29..6cb01b48d8 100644
+--- a/core/modules/field/tests/modules/field_test/field_test.module
++++ b/core/modules/field/tests/modules/field_test/field_test.module
+@@ -16,6 +16,7 @@
+ use Drupal\Core\Form\FormStateInterface;
+ use Drupal\Core\Render\Element;
+ use Drupal\field\FieldStorageConfigInterface;
++use Drupal\Core\Entity\Query\QueryInterface;
+ 
+ require_once __DIR__ . '/field_test.entity.inc';
+ require_once __DIR__ . '/field_test.field.inc';
+@@ -216,3 +217,46 @@ function field_test_field_ui_preconfigured_options_alter(array &$options, $field
+     ];
+   }
+ }
++
++/**
++ * Implements hook_entity_query_alter().
++ *
++ * @see Drupal\KernelTests\Core\Entity\EntityQueryTest::testAlterHook
++ */
++function field_test_entity_query_alter(QueryInterface &$query) {
++  if ($query->hasTag('entity_query_alter_hook_test')) {
++    $query->condition('id', '5', '<>');
++  }
++}
++
++/**
++ * Implements hook_entity_query_ENTITY_TYPE_alter() for 'entity_test_mulrev'.
++ *
++ * @see Drupal\KernelTests\Core\Entity\EntityQueryTest::testAlterHook
++ */
++function field_test_entity_query_entity_test_mulrev_alter(QueryInterface &$query) {
++  if ($query->hasTag('entity_query_entity_test_mulrev_alter_hook_test')) {
++    $query->condition('id', '7', '<>');
++  }
++}
++
++/**
++ * Implements hook_entity_query_TAG_alter() for 'entity_query_alter_tag_test'.
++ *
++ * @see Drupal\KernelTests\Core\Entity\EntityQueryTest::testAlterHook
++ */
++function field_test_entity_query_entity_query_alter_tag_test_alter(QueryInterface &$query) {
++  $query->condition('id', '13', '<>');
++}
++
++/**
++ * Implements hook_entity_query_ENTITY_TYPE_TAG_alter().
++ *
++ * Entity type is 'entity_test_mulrev' and tag is
++ * 'entity_query_entity_test_mulrev_alter_tag_test'.
++ *
++ * @see Drupal\KernelTests\Core\Entity\EntityQueryTest::testAlterHook
++ */
++function field_test_entity_query_entity_test_mulrev_entity_query_entity_test_mulrev_alter_tag_test_alter(QueryInterface &$query) {
++  $query->condition('id', '15', '<>');
++}
+diff --git a/core/tests/Drupal/KernelTests/Core/Entity/EntityQueryTest.php b/core/tests/Drupal/KernelTests/Core/Entity/EntityQueryTest.php
+index d0bf76dfc5..369970e7e7 100644
+--- a/core/tests/Drupal/KernelTests/Core/Entity/EntityQueryTest.php
++++ b/core/tests/Drupal/KernelTests/Core/Entity/EntityQueryTest.php
+@@ -1257,4 +1257,54 @@ public function testToString() {
+     $this->assertSame($expected_string, (string) $query);
+   }
+ 
++  /**
++   * Test the entity query alter hooks are invoked.
++   *
++   * Hook functions in field_test.module add additional conditions to the query
++   * removing entities with specific ids.
++   */
++  public function testAlterHook() {
++    $basicQuery = $this->storage
++      ->getQuery()
++      ->exists($this->greetings, 'tr')
++      ->condition($this->figures . ".color", 'red')
++      ->sort('id');
++
++    // Verify assumptions about the unaltered result.
++    $query = clone $basicQuery;
++    $this->queryResults = $query->execute();
++    $this->assertResult(5, 7, 13, 15);
++
++    // field_test_entity_query_alter() removes the entity with id '5'.
++    $query = clone $basicQuery;
++    $this->queryResults = $query
++      ->addTag('entity_query_alter_hook_test')
++      ->execute();
++    $this->assertResult(7, 13, 15);
++
++    // field_test_entity_query_entity_test_mulrev()_alter removes the entity with
++    // id '7'.
++    $query = clone $basicQuery;
++    $this->queryResults = $query
++      ->addTag('entity_query_entity_test_mulrev_alter_hook_test')
++      ->execute();
++    $this->assertResult(5, 13, 15);
++
++    // field_test_entity_query_entity_query_alter_tag_test_alter() removes the
++    // entity with id '13'.
++    $query = clone $basicQuery;
++    $this->queryResults = $query
++      ->addTag('entity_query_alter_tag_test')
++      ->execute();
++    $this->assertResult(5, 7, 15);
++
++    // field_test_entity_query_entity_test_mulrev_entity_query_entity_test_mulrev_alter_tag_test_alter()
++    // removes the entity with id '15'.
++    $query = clone $basicQuery;
++    $this->queryResults = $query
++      ->addTag('entity_query_entity_test_mulrev_alter_tag_test')
++      ->execute();
++    $this->assertResult(5, 7, 13);
++  }
++
+ }
+diff --git a/core/tests/Drupal/Tests/Core/Entity/Query/Sql/QueryTest.php b/core/tests/Drupal/Tests/Core/Entity/Query/Sql/QueryTest.php
+index b733e81695..6a088e8504 100644
+--- a/core/tests/Drupal/Tests/Core/Entity/Query/Sql/QueryTest.php
++++ b/core/tests/Drupal/Tests/Core/Entity/Query/Sql/QueryTest.php
+@@ -3,9 +3,11 @@
+ namespace Drupal\Tests\Core\Entity\Query\Sql;
+ 
+ use Drupal\Core\Entity\EntityType;
++use Drupal\Core\Extension\ModuleHandler;
+ use Drupal\Tests\UnitTestCase;
+ use Drupal\Core\Entity\Query\QueryException;
+ use Drupal\Core\Entity\Query\Sql\Query;
++use Symfony\Component\DependencyInjection\ContainerInterface;
+ 
+ /**
+  * @coversDefaultClass \Drupal\Core\Entity\Query\Sql\Query
+@@ -31,6 +33,13 @@ protected function setUp(): void {
+     $namespaces = ['Drupal\Core\Entity\Query\Sql'];
+ 
+     $this->query = new Query($entity_type, $conjunction, $connection, $namespaces);
++
++    $container = $this->createMock(ContainerInterface::class);
++    $container->expects($this->any())
++      ->method('get')
++      ->with('module_handler')
++      ->will($this->returnValue($this->createMock(ModuleHandler::class)));
++    \Drupal::setContainer($container);
+   }
+ 
+   /**

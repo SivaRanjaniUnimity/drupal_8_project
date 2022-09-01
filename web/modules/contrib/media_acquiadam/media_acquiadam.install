@@ -1,0 +1,469 @@
+<?php
+
+/**
+ * @file
+ * Installation related hooks and functions.
+ */
+
+use Drupal\Core\Entity\Entity\EntityFormDisplay;
+use Drupal\Core\Entity\Entity\EntityViewDisplay;
+use Drupal\field\Entity\FieldConfig;
+use Drupal\field\Entity\FieldStorageConfig;
+use Symfony\Component\Yaml\Yaml;
+
+/**
+ * Implements hook_schema().
+ */
+function media_acquiadam_schema() {
+  $schema = [];
+  $schema['acquiadam_assets_data'] = [
+    'description' => 'Acquia DAM asset information.',
+    'fields' => [
+      'asset_id' => [
+        'description' => 'The asset ID.',
+        'default' => '',
+        'type' => 'varchar_ascii',
+        'not null' => TRUE,
+        'length' => 128,
+      ],
+      'name' => [
+        'description' => 'The identifier of the data.',
+        'type' => 'varchar_ascii',
+        'length' => 128,
+        'not null' => TRUE,
+        'default' => '',
+      ],
+      'value' => [
+        'description' => 'The value.',
+        'type' => 'blob',
+        'not null' => FALSE,
+        'size' => 'big',
+      ],
+      'serialized' => [
+        'description' => 'Whether value is serialized.',
+        'type' => 'int',
+        'size' => 'tiny',
+        'unsigned' => TRUE,
+        'default' => 0,
+      ],
+    ],
+    'primary key' => ['asset_id', 'name'],
+    'indexes' => [
+      'asset_id' => ['asset_id'],
+      'name' => ['name'],
+    ],
+  ];
+
+  return $schema;
+}
+
+/**
+ * Installs the new asset data schema if necessary.
+ */
+function media_acquiadam_update_8101(&$sandbox) {
+
+  $table_name = 'acquiadam_assets_data';
+
+  $db_schema = Drupal::database()->schema();
+  if ($db_schema->tableExists($table_name)) {
+    return;
+  }
+
+  $new_schema = media_acquiadam_schema();
+  $db_schema->createTable($table_name, $new_schema[$table_name]);
+}
+
+/**
+ * Consolidate Acquia DAM bundle source fields to a single field.
+ */
+function media_acquiadam_update_8102(&$sandbox) {
+  $default_field_name = 'field_acquiadam_asset_id';
+  $destination_table = 'media__' . $default_field_name;
+  $connection = Drupal::database();
+  $db_schema = $connection->schema();
+  $entity_type_manager = Drupal::service('entity_type.manager');
+
+  // Create asset id field if it doesn't exist.
+  if (!$db_schema->tableExists($destination_table)) {
+    $entity_type_manager->getStorage('field_storage_config')->create([
+      'entity_type' => 'media',
+      'field_name' => $default_field_name,
+      'type' => 'integer',
+    ])->save();
+  }
+
+  // Get asset id fields and reduce to those that don't match the default.
+  $asset_id_fields = media_acquiadam_get_bundle_asset_id_fields();
+  $fields_to_migrate = array_diff($asset_id_fields, ['field_acquiadam_asset_id']);
+
+  // Loop through existing bundles/fields and transfer field table data
+  // as well as set the source_field for media types.
+  foreach ($fields_to_migrate as $bundle => $field) {
+    // Select all fields from origin.
+    $origin_table = 'media__' . $field;
+    $origin_query = $connection->select($origin_table, 'o')->fields('o');
+
+    // Insert origin fields into destination.
+    $connection->insert($destination_table)->from($origin_query)->execute();
+
+    // The bundle config.
+    $config = Drupal::service('config.factory')
+      ->getEditable('media.type.' . $bundle);
+    // Set the new source_field.
+    $config->set('source_configuration', ['source_field' => $default_field_name]);
+    // Map the asset id to the old field to avoid potential regressions.
+    $config->set('field_map.id', $field);
+    $config->save();
+
+    // Add field to bundle.
+    $label = 'Asset ID';
+    $field_storage = FieldStorageConfig::loadByName('media', $default_field_name);
+    $field = FieldConfig::loadByName('media', $bundle, $default_field_name);
+
+    if (empty($field)) {
+      $field = FieldConfig::create([
+        'field_storage' => $field_storage,
+        'bundle' => $bundle,
+        'label' => $label,
+      ]);
+      $field->save();
+
+      // Assign widget settings for the 'default' form mode.
+      media_acquiadam_entity_get_form_display('media', $bundle, 'default')
+        ->setComponent($default_field_name, ['type' => 'number'])
+        ->save();
+
+      // Hide the id field in available view modes.
+      $view_modes = Drupal::service('entity_display.repository')
+        ->getViewModes('media');
+      foreach ($view_modes as $view_mode => $view_mode_config) {
+        media_acquiadam_entity_get_display('media', $bundle, $view_mode)
+          ->removeComponent($default_field_name)
+          ->save();
+      }
+    }
+  }
+}
+
+/**
+ * Migrate type mappings to the new type_id property.
+ */
+function media_acquiadam_update_8103(&$sandbox) {
+  $media_bundles = Drupal::entityTypeManager()
+    ->getStorage('media_type')
+    ->loadByProperties(['source' => 'acquiadam_asset']);
+
+  /** @var \Drupal\media\Entity\MediaType $bundle */
+  foreach ($media_bundles as $bundle) {
+    $mapping = $bundle->getFieldMap();
+
+    // Only migrate if there is no type_id set already. This should always be
+    // the cause.
+    if (isset($mapping['type']) && !isset($mapping['type_id'])) {
+      $mapping['type_id'] = $mapping['type'];
+      unset($mapping['type']);
+      $bundle->setFieldMap($mapping);
+      $bundle->save();
+    }
+  }
+}
+
+/**
+ * Migrate time mappings to the new datetime properties.
+ */
+function media_acquiadam_update_8104(&$sandbox) {
+  $media_bundles = Drupal::entityTypeManager()
+    ->getStorage('media_type')
+    ->loadByProperties(['source' => 'acquiadam_asset']);
+
+  $mappings = [
+    'datecaptured' => 'datecaptured_unix',
+    'datecreated' => 'datecreated_unix',
+    'datemodified' => 'datemodified_unix',
+  ];
+
+  /** @var \Drupal\media\Entity\MediaType $bundle */
+  foreach ($media_bundles as $bundle) {
+    $field_mapping = $bundle->getFieldMap();
+
+    foreach ($mappings as $from => $to) {
+      if (isset($field_mapping[$from]) && !isset($field_mapping[$to])) {
+        $field_mapping[$to] = $field_mapping[$from];
+        unset($field_mapping[$from]);
+      }
+    }
+
+    $bundle->setFieldMap($field_mapping);
+    $bundle->save();
+  }
+}
+
+/**
+ * Update Acquia Dam settings to include a setting to disable SameSite Cookies.
+ */
+function media_acquiadam_update_8105(&$sandbox) {
+  $config = \Drupal::configFactory()->getEditable('media_acquiadam.settings');
+  $config->set('samesite_cookie_disable', FALSE);
+  $config->save();
+}
+
+/**
+ * Update Acquia Dam settings to fix a schema issue with sync_interval.
+ */
+function media_acquiadam_update_8106(&$sandbox) {
+  $config = \Drupal::configFactory()->getEditable('media_acquiadam.settings');
+  $sync_interval = $config->get('sync_interval');
+  // If the interval is set to 0.
+  if ($sync_interval === '0') {
+    $int_val = 0;
+  }
+  else {
+    $int_val = intval($sync_interval);
+  }
+  $config->set('sync_interval', $int_val);
+  $config->save();
+}
+
+/**
+ * Update database schema following Acquia DAM upgrade.
+ */
+function media_acquiadam_update_8201() {
+  $source_field = 'field_acquiadam_asset_id';
+  // AcquiaDAM has moved the 'asset_id' from a number to string (uuid).
+  $column_schema = [
+    'description' => 'The asset ID.',
+    'default' => '',
+    'type' => 'varchar_ascii',
+    'not null' => TRUE,
+    'length' => 128,
+  ];
+  $database = Drupal::database();
+  $config_factory = Drupal::configFactory();
+
+  if ($database->schema()->tableExists('acquiadam_assets_data')) {
+    $database->schema()->changeField('acquiadam_assets_data', 'asset_id', 'asset_id', $column_schema);
+  }
+  // Update media bundle source field type.
+  media_acquiadam_update_source_field($database);
+  // Update the existing media types form display which are using
+  // 'acquiadam_asset' as the media source. We have to update source field type
+  // from integer to string.
+  $media_bundles = Drupal::entityTypeManager()
+    ->getStorage('media_type')
+    ->loadByProperties(['source' => 'acquiadam_asset']);
+
+  if ($media_bundles) {
+    foreach ($media_bundles as $bundle => $definition) {
+      // Assign widget settings for the 'default' form mode.
+      media_acquiadam_entity_get_form_display('media', $bundle, 'default')
+        ->setComponent($source_field, ['type' => 'string_textfield'])
+        ->save();
+    }
+  }
+
+  // Update Acquiadam Config Object.
+  $config_path = drupal_get_path('module', 'media_acquiadam') . '/config/install/media_acquiadam.settings.yml';
+  $data = Yaml::parseFile($config_path);
+  $config_factory->getEditable('media_acquiadam.settings')->setData($data)->save(TRUE);
+}
+
+/**
+ * Remove the client_id and client_secret from the config.
+ */
+function media_acquiadam_update_8202() {
+  $config_factory = Drupal::configFactory();
+  $config_factory->getEditable('media_acquiadam.settings')
+    ->clear('client_id')
+    ->clear('client_secret')
+    ->save(TRUE);
+}
+
+/**
+ * Returns the entity view display associated with a bundle and view mode.
+ *
+ * This is an exact copy of the deprecated entity_get_display() from Core 8.6.x.
+ *
+ * @todo Eliminate this in favor of
+ *   \Drupal::service('entity_display.repository')->getViewDisplay() in Core
+ *   8.8.x once that is the lowest supported version.
+ *
+ * @param string $entity_type
+ *   The entity type.
+ * @param string $bundle
+ *   The bundle.
+ * @param string $view_mode
+ *   The view mode, or 'default' to retrieve the 'default' display object for
+ *   this bundle.
+ *
+ * @return \Drupal\Core\Entity\Display\EntityViewDisplayInterface
+ *   The entity view display associated with the view mode.
+ *
+ * @see \Drupal\Core\Entity\EntityStorageInterface::create()
+ * @see \Drupal\Core\Entity\EntityStorageInterface::load()
+ */
+function media_acquiadam_entity_get_display($entity_type, $bundle, $view_mode) {
+  // Try loading the display from configuration.
+  $display = EntityViewDisplay::load($entity_type . '.' . $bundle . '.' . $view_mode);
+
+  // If not found, create a fresh display object. We do not preemptively create
+  // new entity_view_display configuration entries for each existing entity type
+  // and bundle whenever a new view mode becomes available. Instead,
+  // configuration entries are only created when a display object is explicitly
+  // configured and saved.
+  if (!$display) {
+    $display = EntityViewDisplay::create([
+      'targetEntityType' => $entity_type,
+      'bundle' => $bundle,
+      'mode' => $view_mode,
+      'status' => TRUE,
+    ]);
+  }
+
+  return $display;
+}
+
+/**
+ * Returns the entity form display associated with a bundle and form mode.
+ *
+ * This is an exact copy of the deprecated entity_get_form_display() from Core
+ * 8.6.x.
+ *
+ * @todo Eliminate this in favor of
+ *   \Drupal::service('entity_display.repository')->getFormDisplay() in Core
+ *   8.8.x once that is the lowest supported version.
+ *
+ * @param string $entity_type
+ *   The entity type.
+ * @param string $bundle
+ *   The bundle.
+ * @param string $form_mode
+ *   The form mode.
+ *
+ * @return \Drupal\Core\Entity\Display\EntityFormDisplayInterface
+ *   The entity form display associated with the given form mode.
+ *
+ * @see \Drupal\Core\Entity\EntityStorageInterface::create()
+ * @see \Drupal\Core\Entity\EntityStorageInterface::load()
+ */
+function media_acquiadam_entity_get_form_display($entity_type, $bundle, $form_mode) {
+  // Try loading the entity from configuration.
+  $entity_form_display = EntityFormDisplay::load($entity_type . '.' . $bundle . '.' . $form_mode);
+
+  // If not found, create a fresh entity object. We do not preemptively create
+  // new entity form display configuration entries for each existing entity type
+  // and bundle whenever a new form mode becomes available. Instead,
+  // configuration entries are only created when an entity form display is
+  // explicitly configured and saved.
+  if (!$entity_form_display) {
+    $entity_form_display = EntityFormDisplay::create([
+      'targetEntityType' => $entity_type,
+      'bundle' => $bundle,
+      'mode' => $form_mode,
+      'status' => TRUE,
+    ]);
+  }
+
+  return $entity_form_display;
+}
+
+/**
+ * Update data type of media type source-field.
+ *
+ * @param object $database
+ *   The database object.
+ *
+ * @return bool
+ *   Update status.
+ */
+function media_acquiadam_update_source_field($database) {
+  $entity_type = 'media';
+  $field_name = 'field_acquiadam_asset_id';
+  $tables = [
+    'media__field_acquiadam_asset_id',
+    'media_revision__field_acquiadam_asset_id',
+  ];
+  $current_rows = $current_revision_rows = $new_fields_list = [];
+  $field_storage = FieldStorageConfig::loadByName($entity_type, $field_name);
+  // If field storage is not exist return NULL.
+  if (is_null($field_storage)) {
+    return FALSE;
+  }
+  // Backup current rows from source field and source field revision table.
+  foreach ($tables as $table) {
+    if ($table === 'media__field_acquiadam_asset_id') {
+      $current_rows = media_acquiadam_get_table_rows($table);
+    }
+    else {
+      $current_revision_rows = media_acquiadam_get_table_rows($table);
+    }
+  }
+
+  // Use existing field config for new field.
+  foreach ($field_storage->getBundles() as $bundle => $label) {
+    $field = FieldConfig::loadByName($entity_type, $bundle, $field_name);
+    $new_field = $field->toArray();
+    $new_field['field_type'] = 'string';
+    $new_field['settings'] = [];
+    $new_fields_list[] = $new_field;
+  }
+
+  // Define new field storage.
+  $new_field_storage = $field_storage->toArray();
+  $new_field_storage['type'] = 'string';
+  $new_field_storage['settings'] = [
+    'max_length' => 255,
+    'is_ascii' => FALSE,
+    'case_sensitive' => FALSE,
+  ];
+  // Deleting field storage which will also delete bundles(fields).
+  $field_storage->delete();
+  // Purge the field data.
+  field_purge_batch(40);
+
+  // Create new field storage.
+  $new_field_storage = FieldStorageConfig::create($new_field_storage);
+  $new_field_storage->save();
+  // Create new fields.
+  foreach ($new_fields_list as $field) {
+    $field_config = FieldConfig::create($field);
+    $field_config->save();
+  }
+
+  // Restore existing data into field table and revision table if exist.
+  if ($current_rows || $current_revision_rows) {
+    foreach ($tables as $table) {
+      if ($database->schema()->tableExists($table)) {
+        $existing_rows = ($table === 'media__field_acquiadam_asset_id') ? $current_rows : $current_revision_rows;
+        foreach ($existing_rows as $row) {
+          $database->insert($table)
+            ->fields((array) $row)
+            ->execute();
+        }
+      }
+    }
+  }
+
+  return TRUE;
+}
+
+/**
+ * Get existing rows from table.
+ *
+ * @param string $table
+ *   The table name.
+ *
+ * @return array
+ *   An array contain table rows.
+ */
+function media_acquiadam_get_table_rows(string $table) {
+  $rows = [];
+  $database = Drupal::database();
+
+  if ($database->schema()->tableExists($table)) {
+    $query = $database->select($table, 'n');
+    $query->fields('n');
+    $rows = $query->execute()->fetchAll();
+  }
+
+  return $rows;
+}

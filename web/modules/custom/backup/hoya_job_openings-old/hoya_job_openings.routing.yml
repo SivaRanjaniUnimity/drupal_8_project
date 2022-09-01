@@ -1,0 +1,21 @@
+hoya_job_openings.job_openings_location_filter:
+  path: '/hoya-job-openings/job-openings-location-filter'
+  defaults:
+    _title: 'Job openings filter'
+    _form: 'Drupal\hoya_job_openings\Form\JobOpeningsLocationForm'
+  requirements:
+    _permission: 'access content'
+hoya_job_openings.fetchresult:
+  path: '/fetch-job-result' 
+  defaults: 
+    _controller: '\Drupal\hoya_job_openings\Controller\HoyaJobController::getdetail' 
+  methods: POST
+  requirements: 
+    _permission: 'access content' 
+hoya_job_openings.officedetails:
+  path: '/fetch-getoffice_details' 
+  defaults: 
+    _controller: '\Drupal\hoya_job_openings\Controller\HoyaJobController::getoffice_details' 
+  methods: POST
+  requirements: 
+    _permission: 'access content' 

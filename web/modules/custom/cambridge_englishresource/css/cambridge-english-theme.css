@@ -1,0 +1,28 @@
+.tab-container{
+    display:none;
+}
+.tab-container.active{
+    display:block;
+}
+
+#resource-tabs li.active, .add-resource-family.active {
+    /* background: yellow; */
+    /* width: 250px; */
+    font-weight: bold;
+}
+
+#familySearch-result-block tr:hover {
+    /* background: yellow; */
+    background: #ccc;
+}
+
+.tab-addresource .view-content{
+    display: none;;
+}
+.tab-addresource.active .view-content{
+    display: block;
+}
+
+.tab-addresource tr.linked{
+    background: #aee2c1;
+}

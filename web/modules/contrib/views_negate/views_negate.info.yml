@@ -1,0 +1,13 @@
+name: Views Negate
+type: module
+description: To add a "not equal" to condition in contextual argument in text and list type of fields.
+core: 8.x
+core_version_requirement: ^8 || ^9
+package: Views
+dependencies:
+  - drupal:views
+
+# Information added by Drupal.org packaging script on 2021-07-08
+version: '8.x-1.2'
+project: 'views_negate'
+datestamp: 1625725003

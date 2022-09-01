@@ -1,0 +1,19 @@
+# Custom module library for general purposes.
+hoya_job_openings:
+  js:    
+    js/world.js: {}
+    js/anychart-base.min.js: {}
+    js/anychart-exports.min.js: {}
+    js/anychart-map.min.js: {}
+    js/anychart-ui.min.js: {}
+    js/proj4.js: {}
+    js/united_states_of_america.js: {}
+    js/custom.js: {}
+  css:
+    theme:
+      css/anychart-font.min.css: {}
+      css/anychart-ui.min.css: {}
+      css/custom.css: {}
+  dependencies:
+    - core/drupalSettings
+    - core/jquery

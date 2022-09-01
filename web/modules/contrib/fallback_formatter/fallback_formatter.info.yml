@@ -1,0 +1,12 @@
+name: 'Fallback formatter'
+type: module
+description: 'Provides a formatter that allows the user to configure multiple formatters and the order in which they should be attempted to display output.'
+core: 8.x
+core_version_requirement: ^8 || ^9
+dependencies:
+  - drupal:system (>=8.6)
+
+# Information added by Drupal.org packaging script on 2021-02-03
+version: '8.x-1.2'
+project: 'fallback_formatter'
+datestamp: 1612370512

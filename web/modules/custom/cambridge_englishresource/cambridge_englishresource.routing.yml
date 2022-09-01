@@ -1,0 +1,48 @@
+# cambridge-englishresource.add_content:
+#   path: '/node/add/file-link11'
+#   defaults:
+#     _entity_form: 'node.resource_custom_form'
+#     _title_callback: 'Create Link Resource'
+#     node_type: 'file_resource'
+#   requirements: 
+#     _node_add_access: 'node:file_resource'
+#   options:
+#     _node_operation_route: TRUE
+#     parameters:
+#       node_type:
+#         with_config_overrides: TRUE
+cambridge-englishresource.register:
+  path: '/admin/people/ch-create'
+  defaults:
+    _entity_form: 'user.register'
+    _title: 'Create new account'
+  requirements:
+    _permission: 'register certain users'
+cambridge-englishresource.searchfamily:
+  path: '/search-family' 
+  defaults: 
+    _controller: '\Drupal\cambridge_englishresource\Controller\CambridgeEnglishConroller::getData' 
+  methods: POST
+  requirements: 
+    _permission: 'access content' 
+cambridge-englishresource.LinkFileToFamily:
+  path: '/linkFileToFamily' 
+  defaults: 
+    _controller: '\Drupal\cambridge_englishresource\Controller\CambridgeEnglishConroller::LinkFileToFamily' 
+  methods: POST
+  requirements: 
+    _permission: 'access content' 
+cambridge-englishresource.UnlinkFileToFamily:
+  path: '/unlinkFileToFamily' 
+  defaults: 
+    _controller: '\Drupal\cambridge_englishresource\Controller\CambridgeEnglishConroller::UnlinkFileToFamily' 
+  methods: POST
+  requirements: 
+    _permission: 'access content' 
+cambridge-englishresource.MongodbOperationsForm:
+  path: '/MongodbOperationsForm' 
+  defaults: 
+    _form: '\Drupal\cambridge_englishresource\Form\MongodbOperationsForm' 
+    _title: 'Custom Form'
+  requirements: 
+    _access: 'TRUE'

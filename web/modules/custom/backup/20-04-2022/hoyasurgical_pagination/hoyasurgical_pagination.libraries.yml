@@ -1,0 +1,8 @@
+hoyasurgical_pagination_lib:
+  version: 1.x
+  js:
+    js/hoyasurgical_pagination.js: {}
+  dependencies:
+    - core/jquery
+    - core/once
+    - core/drupalSettings

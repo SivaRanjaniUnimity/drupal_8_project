@@ -1,0 +1,92 @@
+<?php
+
+use Drupal\Core\Form\FormStateInterface;
+use Drupal\webform\Entity\Webform;
+use Drupal\webform\WebformSubmissionForm;
+use Drupal\webform\Utility\WebformFormHelper;
+use \Drupal\webform\WebformSubmissionInterface;
+use Drupal\views\ViewExecutable;
+use Drupal\views\Plugin\views\query\QueryPluginBase;
+
+
+function hoyasurgical_pagination_page_attachments(array &$attachments) {
+  // dpm("library");
+  $attachments['#attached']['library'][] = 'hoyasurgical_pagination/hoyasurgical_pagination_lib';
+}
+
+
+function hoyasurgical_pagination_webform_element_alter(array &$element, FormStateInterface $form_state, array $context) {
+  $error_msg = \Drupal::request()->query->get('error');
+  if(!empty($error_msg) && ($error_msg == "404")){
+    if (isset($element['#webform_id']) && $element['#webform_id'] === 'contact_us--subject') {
+      $element['#default_value']="404 page not found";
+      $element['#attributes']['readonly']='readonly';      
+    }
+
+  } 
+}
+
+
+
+/*
+
+ * Implements hook_entity_query_alter.
+
+ */
+
+function hoyasurgical_pagination_entity_query_alter(\Drupal\Core\Entity\Query\QueryInterface $query) {
+
+
+
+  // TODO add condition for leadership page only.
+
+  if ($query->hasTag('prev_next_nodes_type')) {
+    $bundle = $query->getMetaData('type');
+    
+    if($bundle == 'article'){
+      $query->sort('field_order_number', 'ASC');
+    }
+    else{
+      $query->sort('created', 'DESC');
+    }
+
+  }
+
+}
+function hoyasurgical_pagination_query_alter11(Drupal\Core\Database\Query\AlterableInterface $query) {
+  // function hoyasurgical_pagination_entity_query_alter(\Drupal\Core\Entity\Query\QueryInterface $query) {
+  
+  if ($query->hasTag('prev_next_nodes_type')) {
+  
+  $query->addSort("field_order_number", 'ASC');
+      //
+      // dpm("prev_next_nodes_type");
+      
+      // $query->orderby[0]['field'] = "FIELD(node__field_order_number_field_order_number_value)";
+      // $query->orderby[0]['direction'] = "ASC";
+
+      
+
+// $query->orderby("field_order_number_value","ASC");
+
+      // $query->addOrderBy(NULL, 'FIELD(node__field_order_number.field_order_number_value)', 'ASC', 'order_field');
+      // $query->orderBy('field_order_number', 'ASC');
+      // $query->orderby[0]['field'] = "field_order_number";
+      // $query->orderby[0]['direction'] = "ASC";
+
+    //   $query->orderby = [];
+    // $query->orderby[] = [
+    //   'field' => 'field_order_number',
+    //   'direction' => 'ASC'
+    // ];
+    // dpm(11);
+      // dpm($query);
+
+      
+      
+      //
+    // $query
+    //   ->range(0, 2);
+  }
+  // dpm($query);
+}

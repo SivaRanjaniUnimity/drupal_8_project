@@ -1,0 +1,134 @@
+<?php
+use \Drupal\views\ViewExecutable;
+use Drupal\Core\Routing\RouteMatchInterface;
+use \Drupal\Core\Url;
+use \Drupal\Core\Cache\Cache;
+use Drupal\node\Entity\Node;
+use Drupal\Core\Entity\Display\EntityViewDisplayInterface;
+use Drupal\Core\Entity\EntityInterface;
+
+// function general_form_alter($form_id, &$form) {
+// }
+
+
+// function general_views_pre_view(ViewExecutable $view, $display_id, array &$args) {
+
+//     $account = \Drupal::currentUser();
+  
+//     if ($view->id() == 'article_view' && $display_id == 'block_1') {
+//       $node = \Drupal::routeMatch()->getParameter('node');
+//       if ($node instanceof \Drupal\node\NodeInterface) {
+//       $nid = $node->id();
+//       $node = \Drupal::entityTypeManager()->getStorage('node')->load($nid);
+//       $prevnext = \Drupal::service('prevnext.service');
+//       $previous_next = $prevnext->getPreviousNext($node);
+//       $prev = $previous_next['prev'];
+//       $next = $previous_next['next'];
+//       $res_arr = array($prev,$nid,$next);
+//       $res = implode("+",$res_arr);
+//       $view->args[0] =$res;
+//     }
+//   }
+//   }
+
+
+  function general_page_attachments(array &$attachments) {
+    $attachments['#attached']['library'][] = 'general/hoya_custom_lib';
+  }
+
+  function general_theme($existing,$type,$theme,$path){
+    return ['general_custom'=>[
+    "#theme" => "general_theme",
+    "#variables"=>[
+      "data" => null
+      ]
+    ]
+  ];
+  }
+
+
+  // function general_views_pre_view(\Drupal\views\ViewExecutable $view, $display_id, array &$args) 
+  // {
+   
+  //   if($view->id() == "cambridge" && $display_id=="block_3"){
+  //     $current_path = \Drupal::service('path.current')->getPath();      
+  //     $split_url = explode("/",$current_path);
+  //     if(!empty($split_url)){
+  //       $family_id = end($split_url);
+  //       $view->args[0] =$family_id;
+  //     }      
+  //   }    
+  // }
+
+  function general_form_alter(&$form,&$form_state,$form_id){
+  
+  /* 
+    if(($form_id == 'views_exposed_form') && ($form["title"]["#context"]["#view_id"] == "cambridge") && ($form["title"]["#context"]["#display_id"] == "block_1")){
+      // dpm($form['field_width_value']['#default_value'] );
+      $current_path = \Drupal::service('path.current')->getPath();      
+      $split_url = explode("/",$current_path);
+      if(!empty($split_url)){
+       
+       
+        $family_id = end($split_url);
+        dpm( $family_id);
+        // $form['nid']['#default_value'] = $family_id;
+        dpm($form);
+      }
+    // $form['field_width_value']['#default_value'] = 'whatever you want';
+    // unset($form['field_width_value']['#options']['All']);
+   } */
+  }
+
+/**
+ * Implements hook_views_pre_build().
+ */
+function general_views_pre_build(\Drupal\views\ViewExecutable $view) {
+  // $view_ids = ['cambridge'];
+  // $current_path = \Drupal::service('path.current')->getPath();      
+  //     $split_url = explode("/",$current_path);
+  //     $filterValueToSet ="";
+  //     if(!empty($split_url)){
+  //       $nid = end($split_url);
+  //       $node = Node::load($nid);
+  //       $strNodeTitle = $node->title->value;
+  //     }
+  // if ($view->id() == "cambridge") {
+  //   // Prevent caching may be a good idea:
+  //   \Drupal::service('page_cache_kill_switch')->trigger();
+  //   $exposedInput = $view->getExposedInput();
+  //   if (empty($exposedInput['title'])) {
+  //     $view->setExposedInput(['title' => $strNodeTitle]);
+  //     }
+  //   }
+  }
+
+    /**
+ * Implements hook_node_insert().
+ */
+
+function general_node_insert(Drupal\node\NodeInterface $node){
+  if($node->bundle() == "file_resource"){
+    dpm($node);
+dpm($node->get('field_upload_file')->target_id);
+  }
+}
+
+/**
+ * Implements hook_node_update().
+ */
+
+  // function general_node_update(Drupal\node\NodeInterface $node){
+  //   if($node->bundle() == "file_resource"){
+
+  //     $fieldname = $node->get('field_name')->getValue();
+    
+  //   }
+  // }
+
+  /**
+ * Implements hook_entity_type_build().
+ */
+function general_entity_type_build(array &$entity_types) {
+  $entity_types['node']->setFormClass('resource_custom_form', 'Drupal\node\NodeForm');
+}

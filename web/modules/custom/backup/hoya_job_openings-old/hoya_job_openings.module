@@ -1,0 +1,14 @@
+<?php
+
+/**
+ * @file
+ * Primary module hooks for Hoya Job Openings module.
+ *
+ * @DCG
+ * This file is no longer required in Drupal 8.
+ * @see https://www.drupal.org/node/2217931
+ */
+// function hoya_job_openings_page_attachments(array &$attachments) {
+//     // dpm(1);
+//     $attachments['#attached']['library'][] = 'hoya_job_openings/hoya_job_openings';
+//   }

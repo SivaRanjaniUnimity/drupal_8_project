@@ -1,0 +1,78 @@
+<?php
+use Drupal\Core\Form\FormStateInterface;
+use Drupal\webform\Entity\Webform;
+use Drupal\webform\WebformSubmissionForm;
+use Drupal\webform\Utility\WebformFormHelper;
+use \Drupal\webform\WebformSubmissionInterface;
+
+function hoyasurgical_pagination_page_attachments(array &$attachments) {
+  // dpm(1);
+  $attachments['#attached']['library'][] = 'hoyasurgical_pagination/hoyasurgical_pagination_lib';
+}
+
+
+
+
+function hoyasurgical_pagination_webform_element_alter(array &$element, FormStateInterface $form_state, array $context) {
+ 
+  $error_msg = \Drupal::request()->query->get('error');
+  if(!empty($error_msg) && ($error_msg == "404")){
+    if (isset($element['#webform_id']) && $element['#webform_id'] === 'contact_us_form_1--subject') {
+      $element['#default_value']="404 page not found";
+      $element['#attributes']['readonly']='readonly';
+      dpm($element);
+    }
+
+  } 
+}
+
+
+// function hoyasurgical_pagination_form_webform_submission_contact_us_form_1_add_form_alter($form, FormStateInterface &$form_state, $form_id) {
+
+
+  /*function hoyasurgical_pagination_webform_element_alter($form, FormStateInterface &$form_state, $form_id) {
+    dpm(11);
+    dpm($form_id);
+  if ($form_id == 'webform_submission_contact_us_form_1_add_form') {
+    $message = \Drupal::request()->query->get('message');
+    dpm($message);
+    dpm(11);
+   
+    // if($message == "404"){
+      $form['elements']['subject']['#default_value'] = 'hello world!';
+      // $form["elements"]['subject'][LANGUAGE_NONE][0]['value']['#default_value'] =  'hello world!';
+      // $form['subject']['widget']['#default_value'][0]  = 'hello world!';
+    // }
+    
+  }
+}*/
+
+/**
+ * Implements hook_ENTITY_TYPE_prepare_form().
+ */
+/*function hoyasurgical_pagination_webform_submission_prepare_form(WebformSubmissionInterface $webform_submission, $operation, FormStateInterface $form_state) {
+  dpm($operation);
+
+  // Only execute the below code if we are editing a submission.
+  // if ($operation != 'edit') {
+  //   return;
+  // }
+
+  // Get the submission's Webform.
+  $webform = $webform_submission->getWebform();
+  dpm($webform);
+
+  dpm($webform->id());
+  // Only disable the preview for the 'example_wizard' webform included 
+  // in the webform_example.module.
+  if ($webform->id() == 'contact_us_form_111') {
+    // $webform->setSetting('subject', "hello world");
+    // $webform['elements']['subject']['#default_value'] = 'hello world!';
+    // $webform->subject->value = 'Altered label';
+    // $form_state
+    //   ->set('subject_altered', TRUE);
+
+    $form_state->set('subject', "cat");
+    $form_state->setRebuild();
+  }
+}*/

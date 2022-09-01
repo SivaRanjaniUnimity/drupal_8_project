@@ -1,0 +1,13 @@
+hoya_world_map_lib:
+  version: 1.x
+  js:
+    js/anychart-base.min.js: {}
+    js/anychart-exports.min.js: {}
+    js/anychart-map.min.js: {}
+    js/anychart-ui.min.js: {}
+    js/proj4: {}
+    js/united_states_of_america: {}
+  dependencies:
+    - core/jquery
+    - core/once
+    - core/drupalSettings

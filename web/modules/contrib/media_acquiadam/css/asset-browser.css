@@ -1,0 +1,288 @@
+.filter-sort-container {
+  background-color: #efefef;
+  padding: 10px;
+}
+
+.filter-sort-container > div {
+  display: inline-block;
+  padding-right: 10px;
+}
+
+.filter-sort-container .button {
+  margin-left: 2px;
+  margin-right: 2px;
+  padding-left: 10px;
+  padding-right: 10px;
+}
+
+/* categorys and assets take same basic sizing, width, etc. */
+.acquiadam-asset-browser .form-item.form-type-checkbox,
+.acquiadam-asset-browser .form-item.js-form-type-checkbox,
+.acquiadam-browser-category-link {
+  width: 170px;
+  display: inline-block;
+  margin: 5px;
+  min-height: 180px;
+  padding: 5px;
+  vertical-align: top;
+}
+
+.acquiadam-asset-browser .form-item.form-type-checkbox,
+.acquiadam-asset-browser .form-item.js-form-type-checkbox {
+  border: 1px solid #f0f0f0;
+  border-radius: 5px;
+  vertical-align: top;
+}
+
+.acquiadam-asset-browser .js-form-type-checkbox .form-checkbox {
+  float: initial;
+  margin-left: initial;
+  transform: initial;
+}
+
+.acquiadam-asset-checkbox {
+  display: flex;
+  flex-direction: column;
+  margin-top: -15px;
+}
+
+.acquiadam-asset-thumb {
+  height: 140px;
+  overflow: hidden;
+}
+
+.acquiadam-asset-thumb img {
+  width: 100%;
+}
+
+.acquiadam-asset-details {
+  width: 100%;
+}
+
+p.acquiadam-asset-filename {
+  width: 80%;
+  overflow: hidden;
+  margin-top: 5px;
+  margin-left: 5px;
+  font-size: .85em;
+  line-height: 1.1em;
+}
+
+img.acquiadam-asset-browser-icon {
+  height: 20px;
+  float: right;
+  margin: 5px;
+}
+
+.acquiadam-browser-category-link {
+  background-position: top center;
+  background-size: 90% auto;
+  background-repeat: no-repeat;
+}
+
+/* Unset values here to set below. */
+.acquiadam-browser-category-link .button,
+.acquiadam-browser-category-link .button:hover,
+.acquiadam-browser-category-link .button:active,
+.acquiadam-browser-category-link .button:focus {
+  background: none;
+  border: 0;
+  box-shadow: none;
+}
+
+.acquiadam-browser-category-link .acquiadam-category-link-button,
+.acquiadam-browser-category-link .acquiadam-category-link-button:hover,
+.acquiadam-browser-category-link .acquiadam-category-link-button:active,
+.acquiadam-browser-category-link .acquiadam-category-link-button:focus {
+  width: 150px;
+  height: 80px;
+  background-position: center;
+  background-size: contain;
+  background-repeat: no-repeat;
+  border: none;
+  border-radius: 0;
+  padding: 0;
+  margin: 50px 0 15px 15px !important;
+}
+
+.acquiadam-browser-category-link .acquiadam-category-link-button:active,
+.acquiadam-browser-category-link .acquiadam-category-link-button:focus {
+  background-color: transparent;
+}
+
+.acquiadam-browser-category-link input,
+.acquiadam-browser-category-link input:hover,
+.acquiadam-browser-category-link input:active,
+.acquiadam-browser-category-link input:focus {
+  color: transparent;
+  text-shadow: none;
+}
+
+.acquiadam-category-link-thumb {
+  position: relative;
+  display: inline-block;
+  z-index: 10;
+  top: 85px;
+  left: 65px;
+  height: 0;
+}
+
+.acquiadam-category-link-thumb img {
+  max-height: 40px;
+  max-width: 40px;
+}
+
+.acquiadam-browser-category-link p {
+  position: relative;
+  bottom: 0;
+  font-size: .9em;
+  padding: 0 0 0 10px;
+}
+
+input[type="checkbox"] {
+  position: relative;
+  top: 10px;
+  left: 5px;
+  box-shadow: 0 0 4px 1px #82b4ff;
+}
+
+.acquiadam-browser-empty {
+  height: 80px;
+  width: 100%;
+  background-color: #efefef;
+  font-size: 1.4em;
+  text-align: center;
+  padding-top: 60px;
+}
+
+/* Start breadcrumb styles */
+.acquiadam-browser-breadcrumb-container {
+  margin: 5px;
+}
+
+.acquiadam-browser-breadcrumb-container li {
+  display: inline;
+  margin: 0;
+  padding: 0;
+  list-style-type: none;
+}
+
+.acquiadam-browser-breadcrumb-container li:not(:first-child):before {
+  content: " \BB ";
+}
+
+input.acquiadam-browser-breadcrumb {
+  background: transparent;
+  border: none;
+  margin: 5px 0;
+  padding-left: 5px;
+  padding-right: 5px;
+  font-weight: normal;
+  text-decoration: none;
+  color: #0074bd;
+}
+
+input.acquiadam-browser-breadcrumb:hover,
+input.acquiadam-browser-breadcrumb:focus {
+  background: none;
+  box-shadow: none;
+  border: none;
+  font-weight: normal;
+  text-decoration: underline;
+  color: #0074bd;
+}
+
+/* Override default */
+.breadcrumb.acquiadam-browser-breadcrumb-container {
+  padding-top: 0;
+  padding-bottom: 0;
+}
+
+/* end breadcrumb styles */
+
+.acquiadam-asset-browser-pager {
+  text-align: center;
+  position: relative;
+  height: 30px;
+  display: inline-block;
+  float: right;
+  padding-right: 10px;
+}
+
+/* Unset default style to control below. */
+.acquiadam-asset-browser-pager .button,
+.acquiadam-asset-browser-pager .button:hover,
+.acquiadam-asset-browser-pager .button:active,
+.acquiadam-asset-browser-pager .button:focus {
+  background: none;
+  border: none;
+  border-radius: 0;
+  box-shadow: none;
+  padding: 0;
+}
+
+.acquiadam-asset-browser-pager .button,
+.acquiadam-asset-browser-pager .button:hover,
+.acquiadam-asset-browser-pager .button:active,
+.acquiadam-asset-browser-pager .button:focus {
+  color: blue;
+  text-decoration: underline;
+  border-left: 2px solid #999;
+  margin-left: 5px;
+  margin-right: 0;
+  padding-left: 10px;
+  padding-right: 0;
+}
+
+.acquiadam-asset-browser-pager .button:first-child,
+.acquiadam-asset-browser-pager .button:last-child {
+  margin-left: 0;
+  margin-right: 0;
+  padding-left: 10px;
+  padding-right: 0;
+}
+
+.acquiadam-asset-browser-pager .button:first-child {
+  border-left: none;
+}
+
+.acquiadam-asset-browser-pager .page-current {
+  color: black;
+  text-decoration: none;
+}
+
+/* Height is important to make sticky footer appear. Assuming window height is > 600px. */
+.entity-browser-media-browser-form {
+  overflow: hidden;
+}
+
+#edit-asset-container {
+  overflow-y: scroll;
+}
+
+#edit-actions {
+  width: 100%;
+  border-top: 1px solid #efefef;
+  padding: 15px 5px;
+  margin: 0;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.asset-browser-message {
+  background-color: #efefef;
+  border: solid 1px #333;
+  padding: 25px;
+  color: #222;
+  font-size: 15px;
+  text-align: center;
+  margin-top: 15px;
+}
+
+/**
+ * This is gross, but it works.
+ */
+.ui-dialog {
+  width: 97% !important;
+  left: 15px !important;
+}

@@ -1,0 +1,7 @@
+hoyasurgical_pagination.content:
+  path: '/pagination-content' 
+  defaults: 
+    _controller: '\Drupal\hoyasurgical_pagination\Controller\HoyasurgicalPaginationController::getdetail' 
+  methods: POST
+  requirements: 
+    _permission: 'access content' 

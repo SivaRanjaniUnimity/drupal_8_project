@@ -1,0 +1,161 @@
+diff --git a/js/infinite-scroll.js b/js/infinite-scroll.js
+index 0a66527..bb2ac12 100644
+--- a/js/infinite-scroll.js
++++ b/js/infinite-scroll.js
+@@ -6,9 +6,6 @@
+ (function ($, Drupal, debounce) {
+   "use strict";
+ 
+-  // Cached reference to $(window).
+-  var $window = $(window);
+-
+   // The threshold for how far to the bottom you should reach before reloading.
+   var scrollThreshold = 200;
+ 
+@@ -62,6 +59,68 @@
+     Drupal.attachBehaviors(view.$view[0]);
+   };
+ 
++  /**
++  * Get the closest scrollable parent
++  *
++  * @param {jQuery} $element
++  *   jQuery instance of the element.
++  * @param includeHidden
++  *   If the container with hidden scrollbar should be included.
++  *
++  * @return {jQuery}
++  *   jQuery instance of the closest scrollable parent.
++  */
++  function getScrollParent($element, includeHidden) {
++    var position = $element.css('position'),
++      excludeStaticParent = position === 'absolute',
++      overflowRegex = includeHidden ? /(auto|scroll|hidden)/ : /(auto|scroll)/,
++      scrollParent = $element
++        .parents()
++        .filter(function () {
++          var parent = $(this);
++          if (excludeStaticParent && parent.css('position') === 'static') {
++            return false;
++          }
++          return overflowRegex.test(
++            parent.css('overflow') +
++            parent.css('overflow-y') +
++            parent.css('overflow-x')
++          );
++        })
++        .eq(0);
++
++    return position === 'fixed' || !scrollParent.length ?
++        $($element[0].ownerDocument || document)
++        : scrollParent;
++  }
++
++  /**
++    * Determine if the scrollbar is reaching the bottom of a element.
++    *
++    * @param {jQuery} $element
++    *   jQuery instance of the element.
++    * @param {jQuery} $pager
++    *   jQuery instance of the pager.
++    *
++    * @return {boolean}
++    *   Is the bottom reached or not.
++    */
++  function isBottomReached($element, $pager) {
++    // If the scroll position is equal or larger than the total height of the scrollbar,
++    // that means the bottom of the element is reached.
++    if ($element.is(document)) {
++      const $window = $(window);
++      return (
++        $window.innerHeight() + $window.scrollTop() >=
++          $pager.offset().top - scrollThreshold
++        );
++    }
++    return (
++      $element.innerHeight() + $element.scrollTop() >=
++      $element[0].scrollHeight - scrollThreshold
++    );
++  }
++
+   /**
+    * Handle the automatic paging based on the scroll amount.
+    *
+@@ -77,18 +136,16 @@
+       $(context).find(automaticPagerSelector).once('infinite-scroll').each(function () {
+         var $pager = $(this);
+         $pager.addClass('visually-hidden');
+-        var isLoadNeeded = function () {
+-          return window.innerHeight + window.pageYOffset > $pager.offset().top - scrollThreshold;
+-        };
+-        $window.on(scrollEvent, debounce(function () {
+-          if (isLoadNeeded()) {
++        // Attach the scroll event to the first scrollable container
++        // of the pager.
++        var $parent = $(getScrollParent($pager));
++        var $scroller = $parent.is(document) ? $(window) : $parent;
++        $scroller.on(scrollEvent, debounce(function() {
++          if (isBottomReached($parent, $pager)) {
+             $pager.find('[rel=next]').click();
+-            $window.off(scrollEvent);
++            $scroller.off(scrollEvent);
+           }
+         }, 200));
+-        if (isLoadNeeded()) {
+-          $window.trigger(scrollEvent);
+-        }
+       });
+     },
+     detach: function (context, settings, trigger) {
+@@ -97,8 +154,11 @@
+       // other than a scroll. AJAX filters are a good example of the event needing
+       // to be destroyed earlier than above.
+       if (trigger === 'unload') {
+-        if ($(context).find(automaticPagerSelector).removeOnce('infinite-scroll').length) {
+-          $window.off(scrollEvent);
++        var $pagers = $(context).find(automaticPagerSelector);
++        if ($pagers.removeOnce('infinite-scroll').length) {
++            $pagers.each(function(index, element) {
++              getScrollParent($(element)).off(scrollEvent);
++            });
+         }
+       }
+     }
+diff --git a/tests/src/FunctionalJavascript/InfiniteScrollTest.php b/tests/src/FunctionalJavascript/InfiniteScrollTest.php
+index 30b6704..8a57b71 100644
+--- a/tests/src/FunctionalJavascript/InfiniteScrollTest.php
++++ b/tests/src/FunctionalJavascript/InfiniteScrollTest.php
+@@ -186,4 +186,33 @@ class InfiniteScrollTest extends WebDriverTestBase {
+     \Drupal::service('router.builder')->rebuild();
+   }
+ 
++  /**
++   * Tests when the trigger is nested within a scrollable non-window parent.
++   */
++  public function testAutomaticInfiniteScrollWithScrollableParent() {
++    $path = 'automatic-load-sub';
++    $container_selector = 'document.querySelector(".views-element-container")';
++    $this->createView($path, [
++      'button_text' => 'Load More',
++      'automatically_load_content' => TRUE,
++    ]);
++    $driver = $this->getSession()->getDriver();
++    $this->drupalGet($path);
++    // Make the view container scrollable.
++    $driver->executeScript("$container_selector.setAttribute('style', 'overflow-y: auto; max-height: 200px; position: relative')");
++    // Trigger the view to load so that the next pager will use
++    // the height of the scrollable view container instead.
++    $driver->executeScript('document.querySelector(\'a[rel="next"]\').click()');
++    $this->assertSession()->waitForElement('css', '.node--type-page:nth-child(4)');
++    $this->assertTotalNodes(6);
++
++    // Test the view is loaded when the scrollbar of the
++    // scrollable container reaches the bottom.
++    /** @var string $container_height_script The scrollable height of the container minus the scroll threshold */
++    $container_height_script = "$container_selector.scrollHeight - 200";
++    $driver->executeScript("$container_selector.scrollTo(null, $container_height_script)");
++    $this->assertSession()->waitForElement('css', '.node--type-page:nth-child(7)');
++    $this->assertTotalNodes(9);
++  }
++
+ }

@@ -1,0 +1,16 @@
+--- js/infinite-scroll.js
++++ js/infinite-scroll.js
+@@ -154,8 +211,11 @@
+       // other than a scroll. AJAX filters are a good example of the event needing
+       // to be destroyed earlier than above.
+       if (trigger === 'unload') {
+-        if ($(context).find(automaticPagerSelector).removeOnce('infinite-scroll').length) {
+-          $window.off(scrollEvent);
++        var $pagers = $(context).find(automaticPagerSelector);
++        if ($pagers.removeOnce('infinite-scroll').length) {
++            $pagers.each(function(index, element) {
++              getScrollParent($(element)).off(scrollEvent);
++            });
+         }
+       }
+     }

@@ -1,0 +1,43 @@
+<?php
+
+use Drupal\Core\Form\FormStateInterface;
+use Drupal\webform\Entity\Webform;
+use Drupal\webform\WebformSubmissionForm;
+use Drupal\webform\Utility\WebformFormHelper;
+use \Drupal\webform\WebformSubmissionInterface;
+use Drupal\webform\Plugin\WebformHandlerBase;
+use Drupal\webform\WebformInterface;
+
+/**
+ * @file
+ * Primary module hooks for Hoya Job Openings module.
+ *
+ * @DCG
+ * This file is no longer required in Drupal 8.
+ * @see https://www.drupal.org/node/2217931
+ */
+
+
+ /**
+ * Implements hook_element_info_alter().
+ */
+function hoya_job_openings_element_info_alter(array &$info) {
+    if (isset($info['address'])) {
+      $info['address']['#process'][] = 'hoya_job_openings_make_address_line2_visible';
+    }
+  }
+  
+  /**
+   * Process callback for address element.
+   */
+  function hoya_job_openings_make_address_line2_visible(array &$element, FormStateInterface $form_state, array &$complete_form) {
+    $element['address_line2']['#title_display'] = 'before';
+    return $element;
+  }
+
+//   function hoya_job_openings_webform_submission_presave(EntityInterface $entity) {
+//   // Entity new will only allow you to modify the value for first time. 
+//   if ($entity->isNew()) {
+//       $entity->setElementData('key', value);
+//   }
+// }

@@ -1,0 +1,12 @@
+.tab-container{
+    display:none;
+}
+.tab-container.active{
+    display:block;
+}
+
+#resource-tabs li.active {
+    /* background: yellow; */
+    width: 250px;
+    font-weight: bold;
+}

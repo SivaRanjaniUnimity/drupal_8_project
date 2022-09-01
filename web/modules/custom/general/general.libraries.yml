@@ -1,0 +1,11 @@
+hoya_custom_lib:
+  version: 1.x
+  js:
+    js/general.js: {}
+  css:
+    theme:
+      css/general.css: {}
+  dependencies:
+    - core/jquery
+    - core/once
+    - core/drupalSettings

@@ -1,0 +1,57 @@
+{
+    "name": "drupal/media_acquiadam",
+    "type": "drupal-module",
+    "description": "Integrates the Media module ecosystem with Acquia DAM.",
+    "license": "GPL-2.0-or-later",
+    "authors": [
+        {
+            "name": "Acquia",
+            "email": "sales@acquia.com",
+            "homepage": "https://acquia.com"
+        }
+    ],
+    "require": {
+        "drupal/core": "^8.9 || ^9",
+        "drupal/fallback_formatter": "1.x-dev"
+    },
+    "require-dev": {
+        "drupal/entity_browser": "~2.0",
+        "drupal/linkit": "~5.0"
+    },
+    "extra": {
+        "branch-alias": {
+            "dev-2.x": "2.x-dev"
+        },
+        "drush": {
+            "services": {
+                "drush.services.yml": "^9"
+            }
+        },
+        "hooks": {
+            "pre-commit": "vendor/bin/phpcs",
+            "pre-push": "vendor/bin/phpcs"
+        },
+        "phpcodesniffer-search-depth": 5
+    },
+    "repositories": [
+        {
+            "type": "composer",
+            "url": "https://packages.drupal.org/8"
+        }
+    ],
+    "scripts": {
+        "post-install-cmd": "vendor/bin/cghooks add --ignore-lock",
+        "post-update-cmd": "vendor/bin/cghooks update",
+        "cghooks": "vendor/bin/cghooks",
+        "phpcs": "vendor/bin/phpcs",
+        "phpunit": "vendor/bin/phpunit",
+        "test-all": [
+            "phpcs",
+            "phpunit"
+        ]
+    },
+    "support": {
+        "issues": "https://drupal.org/project/issues/media_acquiadam",
+        "source": "https://cgit.drupalcode.org/media_acquiadam"
+    }
+}

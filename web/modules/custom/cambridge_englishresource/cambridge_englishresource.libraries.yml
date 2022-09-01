@@ -1,0 +1,11 @@
+cambridge_resource_library:
+  version: 1.x
+  js:
+    js/cambridge-resource.js: {}
+  css:
+    theme:
+      css/cambridge-english-theme.css: {}
+  dependencies:
+    - core/jquery
+    - core/once
+    - core/drupalSettings

@@ -1,0 +1,23 @@
+general.content:
+  path: '/pagination-content1' 
+  defaults: 
+    _controller: '\Drupal\general\Controller\ArticleController::content' 
+  methods: POST
+  requirements: 
+    _permission: 'access content' 
+general.general-form:
+  path: '/Registration' 
+  defaults: 
+    _form: '\Drupal\general\Form\GeneralForm' 
+    _title: 'Custom Form'
+  requirements: 
+    _access: 'TRUE'
+general.add_content:
+  path: '/node/add/file-link'
+  defaults:
+    _entity_form: 'node.resource_custom_form'
+    _title: 'Create Link Resource'
+  requirements:
+    node: '\d+'
+    _entity_access: 'node.update'
+

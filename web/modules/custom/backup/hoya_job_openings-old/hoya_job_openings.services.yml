@@ -1,0 +1,4 @@
+services:
+  hoya_job_openings.services:
+    class: Drupal\hoya_job_openings\JobOpeningServices
+    

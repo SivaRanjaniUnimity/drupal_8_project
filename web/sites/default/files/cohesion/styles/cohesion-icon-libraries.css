@@ -1,0 +1,11 @@
+[data-icon-fontello] { font-family: "Fontello"; }
+
+[data-icon-fontello]:after { font-family: "Fontello"; content: attr(data-icon-fontello); }
+
+@font-face { font-family: "Fontello"; src: url("/sites/default/files/cohesion/fontello.eot"); src: url("/sites/default/files/cohesion/fontello.eot?#iefix") format("embedded-opentype"), url("/sites/default/files/cohesion/fontello.woff2") format("woff2"), url("/sites/default/files/cohesion/fontello.woff") format("woff"), url("/sites/default/files/cohesion/fontello.ttf") format("truetype"); }
+
+[data-icon-icomoon] { font-family: "Icomoon"; }
+
+[data-icon-icomoon]:after { font-family: "Icomoon"; content: attr(data-icon-icomoon); }
+
+@font-face { font-family: "Icomoon"; src: url("/sites/default/files/cohesion/icomoon.eot"); src: url("/sites/default/files/cohesion/icomoon.eot?#iefix") format("embedded-opentype"), url("/sites/default/files/cohesion/icomoon.woff") format("woff"), url("/sites/default/files/cohesion/icomoon.ttf") format("truetype"); }
